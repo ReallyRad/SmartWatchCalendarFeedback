@@ -1,5 +1,7 @@
 package com.cavorit.arthur.smartwatchcalendarfeedback;
 
+import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.os.Bundle;
 import android.provider.CalendarContract.Calendars;
 import android.database.Cursor;
@@ -8,10 +10,11 @@ import android.net.Uri;
 import android.accounts.AbstractAccountAuthenticator;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+
+import java.util.Date;
 
 import processing.core.*;
-
-
 
 public class feedback extends PApplet {
     //https://developer.android.com/guide/topics/providers/calendar-provider.html
@@ -30,49 +33,110 @@ public class feedback extends PApplet {
     private static final int PROJECTION_DISPLAY_NAME_INDEX = 2;
     private static final int PROJECTION_OWNER_ACCOUNT_INDEX = 3;
 
+    int swipe;
+
+    Gestures g;      // create a gesture object
+
     public void setup() {
         // Run query
-
+        size(240,240);
+        g=new Gestures(100,50,this);    // iniate the gesture object first value is minimum swipe length in pixel and second is the diagonal offset allowed
+        g.setSwipeUp("swipeUp");    // attach the function called swipeUp to the gesture of swiping upwards
+        g.setSwipeDown("swipeDown");    // attach the function called swipeDown to the gesture of swiping downwards
+        g.setSwipeLeft("swipeLeft");  // attach the function called swipeLeft to the gesture of swiping left
+        g.setSwipeRight("swipeRight");  // attach the function called swipeRight to the gesture of swiping right
     }
 
     public void draw() {
-        background(255, 155, 155);
+        //background(255, 155, 155);
+        //background(backgroundColor);    // draw the background with the color, this changes accordingly to what swipe is being carried out
+
         for (int i = 1; i < EVENT_PROJECTION.length; i++) {
             text(EVENT_PROJECTION[i],20 * i, 10);
         }
 
-        Cursor cur = null;
+        String[] projection = new String[] { "calendar_id", "title", "description",
+                "dtstart", "dtend", "eventLocation" };
+
         ContentResolver cr = getContentResolver();
-        Uri uri = Calendars.CONTENT_URI;
-        String selection = "((" + Calendars.ACCOUNT_NAME + " = ?) AND ("
-                + Calendars.ACCOUNT_TYPE + " = ?) AND ("
-                + Calendars.OWNER_ACCOUNT + " = ?))";
-        String[] selectionArgs = new String[] {"sampleuser@gmail.com", "com.google",
-                "sampleuser@gmail.com"};
-        // Submit the query and get a Cursor object back.
-        cur = cr.query(uri, EVENT_PROJECTION, selection, selectionArgs, null);
-        // Use the cursor to step through the returned records
-        int i = 0;
-        while (cur.moveToNext()) {
-            i++;
-            long calID = 0;
-            String displayName = null;
-            String accountName = null;
-            String ownerName = null;
 
-            // Get the field values
-            calID = cur.getLong(PROJECTION_ID_INDEX);
-            displayName = cur.getString(PROJECTION_DISPLAY_NAME_INDEX);
-            accountName = cur.getString(PROJECTION_ACCOUNT_NAME_INDEX);
-            ownerName = cur.getString(PROJECTION_OWNER_ACCOUNT_INDEX);
+        Cursor cursor = cr.query(Uri.parse("content://com.android.calendar/events"),
+                projection,
+                null,
+                null,
+                null);
 
-            text(displayName,0,200*mouseX);
-            text(accountName, 20, 400*mouseX);
-            text(ownerName, 40, 600*mouseX);
-            // Do something with the values...
+        int j=0;
 
+        while (cursor.moveToNext()) {
+            j++;
+            int calendar_id = 0;
+            String title = "";
+            String description = "";
+            String dstart = "";
+            String dend = "";
+
+            calendar_id = cursor.getInt(0);
+            title = cursor.getString(1);
+            description = cursor.getString(2);
+            dstart = cursor.getString(3);
+            dend = cursor.getString(4);
+
+            text(title, 20 + swipe, 20+ 20*j);
+            text(description, 25 + swipe, 30 + 20*j);
         }
+    }
+/*
+/*
+Example code to show one way to work with gestures at Android devices.
+Swipe left, right, up and down to call different functions that changes the background color.
+Swipe settings such as how much directional swipe is allowed and minimum swipe length can be set easily in the constructor of the gesture class.
 
+Tested on
+osx
+Processing 2.0a4
+java version "1.6.0_29"
+Android SDK tools 16
+Samsung Galaxy Tab 10.1 Honeycomb 3.1
+
+made by
+david sjunnesson
+david@tellart.com
+Tellart.com
+2012
+*/
+
+
+    // android touch event.
+    public boolean surfaceTouchEvent(MotionEvent event) {
+        // check what that was  triggered
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:    // ACTION_DOWN means we put our finger down on the screen
+                g.setStartPos(new PVector(event.getX(), event.getY()));    // set our start position
+                break;
+            case MotionEvent.ACTION_UP:    // ACTION_UP means we pulled our finger away from the screen
+                g.setEndPos(new PVector(event.getX(), event.getY()));    // set our end position of the gesture and calculate if it was a valid one
+                break;
+        }
+        return super.surfaceTouchEvent(event);
+    }
+
+    // function that is called when we are swiping upwards
+    void swipeUp() {
+        println("a swipe up");
+        //backgroundColor=color(100);
+    }
+    void swipeDown() {
+        println("a swipe down");
+        //backgroundColor=color(150);
+    }
+    void swipeLeft() {
+        println("a swipe left");
+        //backgroundColor=color(200);
+    }
+    void swipeRight() {
+        println("a swipe right");
+        //backgroundColor=color(250);
     }
 }
 
