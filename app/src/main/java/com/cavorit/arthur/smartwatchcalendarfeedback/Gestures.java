@@ -4,6 +4,7 @@ package com.cavorit.arthur.smartwatchcalendarfeedback;
  * Created by Arthur on 10/23/2014.
  */
 import java.lang.reflect.Method;
+import java.lang.Math;
 import processing.core.*;
 
 class Gestures {
@@ -12,6 +13,7 @@ class Gestures {
     PVector startPos, endPos;
     PApplet pApp;
     Method[] m;
+
     Gestures(int minimum,int offSet,PApplet theApplet) {
         m=new Method[4];
         pApp = theApplet;
@@ -31,7 +33,7 @@ class Gestures {
     }
     // check if it is a valid swipe that has been performed and if so perform the attached function
     void checkSwipe() {
-        if (abs(startPos.x-endPos.x)>minLength&&abs(startPos.y-endPos.y)<maxOffset) {
+        if (Math.abs((startPos.x-endPos.x))>minLength&&Math.abs(startPos.y-endPos.y)<maxOffset) {
             if (startPos.x<endPos.x) {
                 performAction(2);    // a swipe right
             }
@@ -40,7 +42,7 @@ class Gestures {
             }
         }
         else {
-            if (abs(startPos.y-endPos.y)>minLength&&abs(startPos.x-endPos.x)<maxOffset) {
+            if (Math.abs(startPos.y-endPos.y)>minLength&&Math.abs(startPos.x-endPos.x)<maxOffset) {
                 if (startPos.y<endPos.y) {
                     performAction(3);  // a swipe downwards
                 }
@@ -65,14 +67,14 @@ class Gestures {
     void setAction(int direction, String method) {
         if (method != null && !method.equals("")) {
             try {
-                m[direction] = pApp.getClass().getMethod(method);
+             //   m[direction] = pApp.getClass().getMethod(method);
             }
             catch (SecurityException e) {
                 e.printStackTrace();
             }
-            catch (NoSuchMethodException e) {
+            /*catch (NoSuchMethodException e) {
                 e.printStackTrace();
-            }
+            }*/
         }
     }
     // attach a function to a left swipe
