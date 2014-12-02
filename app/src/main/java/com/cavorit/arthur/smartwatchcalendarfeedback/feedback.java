@@ -25,54 +25,55 @@ public class feedback extends PApplet implements SensorEventListener {
     private SensorManager sensorManager;
     private Sensor accelerometer;
     float[] accelData;
-    //https://developer.android.com/guide/topics/providers/calendar-provider.html
-    // Projection array. Creating indices for this array instead of doing
-    // dynamic lookups improves performance.
-    public static final String[] EVENT_PROJECTION = new String[]{
-            Calendars._ID,                           // 0
-            Calendars.ACCOUNT_NAME,                  // 1
-            Calendars.CALENDAR_DISPLAY_NAME,         // 2
-            Calendars.OWNER_ACCOUNT                  // 3
-    };
-
-    // The indices for the projection array above.
-    private static final int PROJECTION_ID_INDEX = 0;
-    private static final int PROJECTION_ACCOUNT_NAME_INDEX = 1;
-    private static final int PROJECTION_DISPLAY_NAME_INDEX = 2;
-    private static final int PROJECTION_OWNER_ACCOUNT_INDEX = 3;
-
-    String displayText;
-    double dstart, dend;
 
     RadioButton[] radioButtons;
     int options;
 
+    String displayText;
+
+    Gestures gestureManager;
+    boolean beganSwipe;
+
     public void setup() {
+        //Processing stuff
+        frameRate(60);
+        smooth();
+
+        //sensor stuff
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
-        //mSensorManager.registerListener()
-        //Run query
-        smooth();
+        //radio buttons stuff
         options = 5;
         radioButtons = new RadioButton[options];
         for (int i = 0; i < options; i++) {
             int x = 30 + i * (width - 20) / options;
             int y = (int)(0.80*(float)height);
-            radioButtons[i] = new RadioButton(x, y);
+            radioButtons[i] = new RadioButton(x, y, this);
         }
         Ani.init(this);
 
-        dstart = 0;
-        dend = 0;
-
+        //get calendar data
         displayText = getCalendarData();
+
+        //swipe stuff
+        gestureManager = new Gestures(20, 45, this);
+        gestureManager.setAction(0, "swipeLeft");
+        gestureManager.setAction(2, "swipeRight");
+        beganSwipe = false;
     }
 
+    public void swipeLeft(){
+        println("swipe left!");
+    };
+    public void swipeRight(){
+        println("swipe right");
+    };
+
     public void draw() {
-        int c1 = color(181, 214, 196);
         background(255);
+        int c1 = color(181, 214, 196);
         int c2 = color(195, 96, 93);
         //setGradient(0, 0, width, height, c1, c2);
         for (int i=0; i<options; i++) {
@@ -83,36 +84,43 @@ public class feedback extends PApplet implements SensorEventListener {
         text(displayText.split("\n")[0], 15, 30);
         textSize(12);
         text(displayText.split("\n")[1], 15, 50);
+        text(String.valueOf(accelData[0])+ " " + String.valueOf(accelData[1])+ " " + String.valueOf(accelData[2]), 15, 65);
+                
     }
 
-    public void mousePressed() {
+    public void mousePressed() { //handle radiobuttons and trigger swipes
         int clicked = -1;
         for (int i=0; i<options; i++) {
             if (pow(pow((mouseX-radioButtons[i].pos.x), 2) + pow((mouseY-radioButtons[i].pos.y), 2), 0.5f)<30) {
                 clicked = i;
-                //println("button ", i, " clicked");
                 radioButtons[i].clicked();
             }
         }
-        if (clicked >-1) { //if other radio button was clicked
+        if (clicked >-1) { //if some radio button was clicked
             for (int i=0; i<options; i++) {
                 if (clicked != i)  radioButtons[i].unselected();
-                //println("button ", i, " unclicked");
             }
+        }
+        else { //if no radio button was clicked, check if swipe
+            gestureManager.setStartPos(new PVector(mouseX, mouseY));
+            beganSwipe = true;
+        }
+    }
+
+    public void mouseReleased() {
+        if (beganSwipe) {
+            gestureManager.setEndPos(new PVector(mouseX, mouseY));
+            beganSwipe = false;
         }
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-    float lala = 0;
+        accelData = event.values;
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
-    public void keyPressed() {
 
     }
 
@@ -126,6 +134,24 @@ public class feedback extends PApplet implements SensorEventListener {
     }
 
     String getCalendarData() {
+        //https://developer.android.com/guide/topics/providers/calendar-provider.html
+        // Projection array. Creating indices for this array instead of doing
+        // dynamic lookups improves performance.
+        String[] EVENT_PROJECTION = new String[]{
+                Calendars._ID,                           // 0
+                Calendars.ACCOUNT_NAME,                  // 1
+                Calendars.CALENDAR_DISPLAY_NAME,         // 2
+                Calendars.OWNER_ACCOUNT                  // 3
+        };
+
+        // The indices for the projection array above.
+        final int PROJECTION_ID_INDEX = 0;
+        final int PROJECTION_ACCOUNT_NAME_INDEX = 1;
+        final int PROJECTION_DISPLAY_NAME_INDEX = 2;
+        final int PROJECTION_OWNER_ACCOUNT_INDEX = 3;
+
+        double dstart, dend;
+
         String returnString = "no current events";
         for (int i = 1; i < EVENT_PROJECTION.length; i++) {
             //text(EVENT_PROJECTION[i], 20 * i, 10);
@@ -160,46 +186,6 @@ public class feedback extends PApplet implements SensorEventListener {
         }
 
         return returnString;
-    }
-
-    class RadioButton {
-        public
-        PVector pos;
-        int outer_diam, inner_diam;
-        boolean selected;
-        int outer_fill, outer_stroke, inner_fill;
-
-        RadioButton(float x, float y) {
-            pos = new PVector(x,y);
-            outer_diam = 30;
-            inner_diam = 0;
-            selected = false;
-
-            outer_fill = color(148f,138f,138f);
-            outer_stroke = color(203,246,172);
-            inner_fill = color(248,245,211);
-        }
-
-        void draw() {
-            strokeWeight(3);
-            fill(outer_fill);
-            stroke(outer_stroke);
-            ellipse(pos.x, pos.y, outer_diam, outer_diam);
-            fill(inner_fill);
-            noStroke();
-            if (selected) ellipse(pos.x+0.5f, pos.y+0.5f, inner_diam, inner_diam);
-        }
-
-        void clicked() {
-            selected = true;
-            Ani.to(this, 0.21f, "inner_diam", 17, Ani.BACK_OUT);
-        }
-
-        void unselected() {
-            selected = false;
-            //inner_diam = 0;
-            Ani.to(this, 1.04f, "inner_diam", 0, Ani.BACK_OUT);
-        }
     }
 }
 

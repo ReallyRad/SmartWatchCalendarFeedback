@@ -17,8 +17,8 @@ class Gestures {
     Gestures(int minimum,int offSet,PApplet theApplet) {
         m=new Method[4];
         pApp = theApplet;
-        maxOffset=offSet;    //number pixels you are allowed to travel off the axis and still being counted as a swipe
-        minLength=minimum;    // number of pixels you need to move your finger to count as a swipe
+        minLength=minimum; // number of pixels you need to move your finger to count as a swipe
+        maxOffset=offSet; //number pixels you are allowed to travel off the axis and still being counted as a swipe
     }
     // where did our motion start
     void setStartPos(PVector pos) {
@@ -31,6 +31,7 @@ class Gestures {
         endPos=new PVector();
         startPos=new PVector();
     }
+
     // check if it is a valid swipe that has been performed and if so perform the attached function
     void checkSwipe() {
         if (Math.abs((startPos.x-endPos.x))>minLength&&Math.abs(startPos.y-endPos.y)<maxOffset) {
@@ -41,17 +42,8 @@ class Gestures {
                 performAction(0);    // a swipe left
             }
         }
-        else {
-            if (Math.abs(startPos.y-endPos.y)>minLength&&Math.abs(startPos.x-endPos.x)<maxOffset) {
-                if (startPos.y<endPos.y) {
-                    performAction(3);  // a swipe downwards
-                }
-                else {
-                    performAction(1);  // a swipe upwards
-                }
-            }
-        }
     }
+
     // call the function that we have defined with setAction
     void performAction(int direction) {
         if (m[direction] == null)
@@ -63,20 +55,22 @@ class Gestures {
             e.printStackTrace();
         }
     }
+
     // define a function that should get called when the different swipes is done
     void setAction(int direction, String method) {
         if (method != null && !method.equals("")) {
             try {
-             //   m[direction] = pApp.getClass().getMethod(method);
+                m[direction] = pApp.getClass().getMethod(method);
             }
             catch (SecurityException e) {
                 e.printStackTrace();
             }
-            /*catch (NoSuchMethodException e) {
+            catch (NoSuchMethodException e) {
                 e.printStackTrace();
-            }*/
+            }
         }
     }
+
     // attach a function to a left swipe
     void setSwipeLeft(String _funcName) {
         setAction(0, _funcName);
