@@ -42,6 +42,7 @@ class RadioButton {
     void clicked() {
         selected = true;
         Ani.to(this, 0.21f, "inner_diam", 17, Ani.BACK_OUT);
+
     }
 
     void unselected() {

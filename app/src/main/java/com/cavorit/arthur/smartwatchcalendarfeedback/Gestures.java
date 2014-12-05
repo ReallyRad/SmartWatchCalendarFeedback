@@ -15,10 +15,10 @@ class Gestures {
     Method[] m;
 
     Gestures(int minimum,int offSet,PApplet theApplet) {
-        m=new Method[4];
+        m = new Method[4];
         pApp = theApplet;
-        minLength=minimum; // number of pixels you need to move your finger to count as a swipe
-        maxOffset=offSet; //number pixels you are allowed to travel off the axis and still being counted as a swipe
+        minLength = minimum; // number of pixels you need to move your finger to count as a swipe
+        maxOffset = offSet; //number pixels you are allowed to travel off the axis and still being counted as a swipe
     }
     // where did our motion start
     void setStartPos(PVector pos) {
